@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi manchi ❤️ - Carta Pokémon Olografica</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts per stile Carta Pokémon -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,600;0,700;0,800;0,900;1,600;1,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- html2canvas per esportazione PNG ad alta risoluzione -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        :root {
+            --pointer-x: 50%;
+            --pointer-y: 50%;
+            --card-opacity: 0.88;
+            --rotate-x: 0deg;
+            --rotate-y: 0deg;
+            --bg-x: 50%;
+            --bg-y: 50%;
+            --shimmer-pos: 50%;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background:
+                radial-gradient(circle at 18% 18%, rgba(244, 63, 94, 0.22) 0%, transparent 42%),
+                radial-gradient(circle at 82% 78%, rgba(56, 189, 248, 0.18) 0%, transparent 45%),
+                radial-gradient(circle at 50% 50%, #1e1b4b 0%, #0f172a 58%, #020617 100%);
+            min-height: 100vh;
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+
+        .font-poke {
+            font-family: 'Exo 2', sans-serif;
+        }
+
+        /* Palcoscenico 3D con prospettiva 1100px */
+        .card-stage {
+            perspective: 1100px;
+            transform-style: preserve-3d;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: pan-y;
+        }
+
+        /* Dimensioni ufficiali 400x560px della carta Pokémon */
+        .pokemon-card {
+            width: 400px;
+            height: 560px;
+            position: relative;
+            border-radius: 22px;
+            transform-style: preserve-3d;
+            transform: rotateX(var(--rotate-x)) rotateY(var(--rotate-y));
+            transition: transform 0.14s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.3s ease;
+            box-shadow:
+                0 30px 65px -12px rgba(0, 0, 0, 0.88),
+                0 0 45px -5px rgba(244, 63, 94, 0.35),
+                0 0 25px -5px rgba(250, 204, 21, 0.35),
+                inset 0 0 2px 1px rgba(255, 255, 255, 0.65);
+            cursor: grab;
+            overflow: hidden;
+            will-change: transform;
+        }
+
+        .pokemon-card:active {
+            cursor: grabbing;
+        }
+
+        /* Cornice metallica dorata realistica multistrato */
+        .card-gold-border {
+            position: absolute;
+            inset: 0;
+            padding: 13px;
+            border-radius: 22px;
+            background: linear-gradient(
+                135deg,
+                #b48811 0%,
+                #fcf6ba 18%,
+                #d4af37 35%,
+                #fef08a 50%,
+                #b38728 68%,
+                #fbf5b7 85%,
+                #854d0e 100%
+            );
+            box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.45);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Interno della carta con texture energetica */
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border-radius: 13px;
+            padding: 11px 13px 10px 13px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow:
+                inset 0 2px 6px rgba(255, 255, 255, 0.45),
+                inset 0 -2px 8px rgba(0, 0, 0, 0.35),
+                0 0 0 1.5px rgba(120, 83, 18, 0.68);
+            overflow: hidden;
+            z-index: 1;
+            transition: background 0.45s ease;
+        }
+
+        .card-inner::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image:
+                radial-gradient(circle at 18% 22%, rgba(255, 255, 255, 0.28) 0%, transparent 42%),
+                radial-gradient(circle at 84% 76%, rgba(255, 255, 255, 0.22) 0%, transparent 45%),
+                repeating-conic-gradient(from 0deg at 50% 38%, rgba(255, 255, 255, 0.045) 0deg 10deg, transparent 10deg 20deg);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Gradienti classici della carta Pokémon */
+        .theme-fire {
+            background: linear-gradient(150deg, #fb7185 0%, #e11d48 38%, #9f1239 76%, #4c0519 100%);
+        }
+        .theme-water {
+            background: linear-gradient(150deg, #38bdf8 0%, #0284c7 38%, #1d4ed8 76%, #172554 100%);
+        }
+        .theme-electric {
+            background: linear-gradient(150deg, #fde047 0%, #eab308 38%, #ca8a04 78%, #713f12 100%);
+        }
+        .theme-fairy {
+            background: linear-gradient(150deg, #f472b6 0%, #db2777 38%, #7e22ce 78%, #3b0764 100%);
+        }
+
+        /* Cornice dorata centrale per la foto */
+        .artwork-frame {
+            position: relative;
+            width: 100%;
+            height: 232px;
+            border-radius: 9px;
+            padding: 4px;
+            background: linear-gradient(
+                135deg,
+                #a16207 0%,
+                #fef08a 25%,
+                #d4af37 50%,
+                #fef9c3 75%,
+                #854d0e 100%
+            );
+            box-shadow:
+                0 6px 15px rgba(0, 0, 0, 0.48),
+                inset 0 0 3px rgba(255, 255, 255, 0.9);
+            z-index: 2;
+        }
+
+        .artwork-inner {
+            width: 100%;
+            height: 100%;
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+            background: #0f172a;
+            box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.55);
+        }
+
+        .couple-photo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: 50% 62%;
+            display: block;
+            transform: scale(1.02);
+        }
+
+        /* Livello 1: Rainbow Gradient Olografico */
+        .holo-rainbow {
+            position: absolute;
+            inset: 0;
+            border-radius: 22px;
+            pointer-events: none;
+            z-index: 20;
+            opacity: var(--card-opacity);
+            background-image:
+                linear-gradient(
+                    118deg,
+                    transparent 10%,
+                    rgba(255, 0, 128, 0.52) 26%,
+                    rgba(255, 204, 0, 0.52) 40%,
+                    rgba(0, 255, 180, 0.52) 54%,
+                    rgba(0, 170, 255, 0.52) 68%,
+                    rgba(170, 0, 255, 0.52) 82%,
+                    transparent 94%
+                ),
+                repeating-linear-gradient(
+                    -45deg,
+                    rgba(255, 255, 255, 0.055) 0px,
+                    rgba(255, 255, 255, 0.055) 2px,
+                    transparent 2px,
+                    transparent 6px
+                );
+            background-size: 260% 260%, 100% 100%;
+            background-position: var(--bg-x) var(--bg-y), center;
+            mix-blend-mode: color-dodge;
+            transition: opacity 0.25s ease;
+        }
+
+        /* Livello 2: Shimmer/Shine diagonale + radiale che segue il mouse */
+        .holo-shimmer {
+            position: absolute;
+            inset: 0;
+            border-radius: 22px;
+            pointer-events: none;
+            z-index: 21;
+            opacity: var(--card-opacity);
+            background:
+                linear-gradient(
+                    125deg,
+                    transparent 25%,
+                    rgba(255, 255, 255, 0.08) 42%,
+                    rgba(255, 255, 255, 0.68) 50%,
+                    rgba(255, 255, 255, 0.08) 58%,
+                    transparent 75%
+                ),
+                radial-gradient(
+                    farthest-corner circle at var(--pointer-x) var(--pointer-y),
+                    rgba(255, 255, 255, 0.78) 0%,
+                    rgba(255, 255, 255, 0.24) 28%,
+                    transparent 72%
+                );
+            background-size: 240% 240%, 100% 100%;
+            background-position: var(--shimmer-pos) var(--shimmer-pos), center;
+            mix-blend-mode: overlay;
+            transition: opacity 0.25s ease;
+        }
+
+        /* Livello 3: Scintille stellari olografiche */
+        .holo-sparkles {
+            position: absolute;
+            inset: 0;
+            border-radius: 22px;
+            pointer-events: none;
+            z-index: 22;
+            opacity: calc(var(--card-opacity) * 0.9);
+            background-image:
+                radial-gradient(circle at 20% 28%, rgba(255, 255, 255, 0.95) 1px, transparent 2.5px),
+                radial-gradient(circle at 76% 20%, rgba(254, 240, 138, 0.95) 1.5px, transparent 3px),
+                radial-gradient(circle at 42% 66%, rgba(255, 255, 255, 0.9) 1px, transparent 2px),
+                radial-gradient(circle at 84% 62%, rgba(244, 114, 182, 0.95) 1.5px, transparent 3px),
+                radial-gradient(circle at 18% 82%, rgba(125, 211, 252, 0.9) 1.2px, transparent 2.5px),
+                radial-gradient(circle at 60% 44%, rgba(255, 255, 255, 0.95) 1.2px, transparent 2.5px),
+                radial-gradient(circle at 32% 14%, rgba(255, 255, 255, 0.85) 1px, transparent 2px),
+                radial-gradient(circle at 68% 88%, rgba(253, 224, 71, 0.9) 1.4px, transparent 3px);
+            background-size: 180px 180px;
+            background-position: calc(var(--bg-x) * 0.5) calc(var(--bg-y) * 0.5);
+            mix-blend-mode: screen;
+        }
+
+        /* Striscia dorata informativa sotto la foto */
+        .poke-info-strip {
+            background: linear-gradient(90deg, #a16207 0%, #fef08a 22%, #eab308 50%, #fef08a 78%, #a16207 100%);
+            color: #422006;
+            font-size: 9.5px;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+            padding: 2.5px 8px;
+            border-radius: 999px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.85);
+            z-index: 2;
+        }
+
+        /* Box per la frase romantica come Effetto Speciale */
+        .ability-box {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 241, 242, 0.92) 100%);
+            border: 1.5px solid rgba(212, 175, 55, 0.92);
+            border-radius: 10px;
+            padding: 7px 11px;
+            box-shadow:
+                0 4px 12px rgba(0, 0, 0, 0.28),
+                inset 0 1px 0 rgba(255, 255, 255, 1);
+            z-index: 2;
+            color: #1e293b;
+            transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.28s ease, background 0.28s ease;
+        }
+
+        .ability-box.effect-changing {
+            transform: scale(0.965);
+            box-shadow:
+                0 0 18px rgba(244, 63, 94, 0.55),
+                inset 0 1px 0 rgba(255, 255, 255, 1);
+        }
+
+        .ability-content-transition {
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+
+        .ability-content-hidden {
+            opacity: 0;
+            transform: translateY(4px);
+        }
+
+        /* Animazione cuoricini fluttuanti */
+        @keyframes floatUpHeart {
+            0% {
+                transform: translateY(0) scale(0.7) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-190px) scale(1.35) rotate(16deg);
+                opacity: 0;
+            }
+        }
+
+        .floating-heart {
+            position: fixed;
+            pointer-events: none;
+            z-index: 50;
+            animation: floatUpHeart 1.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        @media (max-width: 440px) {
+            .card-scale-wrapper {
+                transform: scale(0.84);
+                transform-origin: top center;
+                margin-bottom: -86px;
+            }
+        }
+    </style>
+</head>
+
+<body class="py-5 px-4 sm:px-6 flex flex-col min-h-screen justify-between items-center relative">
+
+    <!-- Intestazione romantica pulita (nessun banner di configurazione) -->
+    <header class="max-w-xl mx-auto w-full text-center mb-2 z-10">
+        <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-rose-500/15 border border-rose-400/30 text-rose-200 text-[11px] font-bold uppercase tracking-widest mb-1.5 shadow-sm">
+            <span>✨ Edizione Limitata Collezionabile ✨</span>
+        </div>
+        <h1 class="text-2xl sm:text-3xl font-black tracking-tight bg-gradient-to-r from-amber-200 via-rose-300 to-amber-200 bg-clip-text text-transparent font-poke drop-shadow">
+            Mi manchi ❤️
+        </h1>
+        <p class="text-xs sm:text-sm text-slate-300 mt-0.5">
+            Muovi il mouse o il dito sulla nostra carta olografica per farla brillare in 3D
+        </p>
+    </header>
+
+    <!-- Area Centrale con la Carta Pokémon Olografica 400x560px -->
+    <main class="w-full max-w-2xl mx-auto flex flex-col items-center justify-center my-auto z-10">
+
+        <div class="card-scale-wrapper flex justify-center">
+            <div id="cardStage" class="card-stage p-2">
+                <div id="pokemonCard" class="pokemon-card">
+                    <!-- Livelli Olografici Sovrapposti -->
+                    <div class="holo-rainbow"></div>
+                    <div class="holo-shimmer"></div>
+                    <div class="holo-sparkles"></div>
+
+                    <!-- Cornice Dorata Metallica -->
+                    <div class="card-gold-border">
+                        <!-- Interno Carta (Default: Rosso Fuoco/Amore) -->
+                        <div id="cardInner" class="card-inner theme-fire">
+
+                            <!-- 1. HEADER DELLA CARTA: Badge, Nome Pokémon, HP e Icona Tipo -->
+                            <div class="relative z-10 flex items-center justify-between gap-2 pb-0.5">
+                                <div class="flex items-center gap-1.5 min-w-0">
+                                    <span class="px-2 py-0.5 text-[8.5px] font-black uppercase tracking-wider rounded-md bg-gradient-to-b from-amber-100 to-amber-400 text-amber-950 shadow border border-amber-200 shrink-0 font-poke italic">
+                                        VMAX
+                                    </span>
+                                    <h2 class="font-poke font-black text-[21px] leading-tight tracking-tight text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.85)] truncate">
+                                        Noi Due ❤️
+                                    </h2>
+                                </div>
+
+                                <div class="flex items-center gap-1.5 shrink-0">
+                                    <div class="flex items-baseline text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.85)] font-poke">
+                                        <span class="text-[11px] font-extrabold text-amber-200 mr-0.5">HP</span>
+                                        <span id="cardHpTop" class="text-[22px] font-black leading-none tracking-tight">990</span>
+                                    </div>
+                                    <!-- Icona Elementale -->
+                                    <div id="typeIconBadge" class="w-7 h-7 rounded-full flex items-center justify-center shadow-md border border-white/85 bg-gradient-to-br from-rose-400 to-red-700">
+                                        <svg class="w-4 h-4 text-white drop-shadow" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 2. AREA CENTRALE GRANDE PER LA FOTO (IMG_1021_2.jpg / IMG_1021.jpg) -->
+                            <div class="artwork-frame">
+                                <div class="artwork-inner">
+                                    <!-- Immagine principale collegata direttamente al file sul server web -->
+                                    <img
+                                        id="cardPhoto"
+                                        src="IMG_1021_2.jpg"
+                                        alt="Noi due insieme"
+                                        class="couple-photo"
+                                    />
+
+                                    <!-- Canvas silenzioso usato solo se l'anteprima non ha ancora i file nella cartella del sito -->
+                                    <canvas
+                                        id="fallbackCoupleCanvas"
+                                        width="700"
+                                        height="480"
+                                        class="w-full h-full object-cover hidden"
+                                    ></canvas>
+
+                                    <!-- Ombra interna realistica -->
+                                    <div class="absolute inset-0 pointer-events-none shadow-[inset_0_0_18px_rgba(0,0,0,0.38)]"></div>
+
+                                    <!-- Badge angolare basso -->
+                                    <div class="absolute bottom-1.5 right-2 bg-black/65 backdrop-blur-xs text-[9px] font-bold text-amber-200 px-2 py-0.5 rounded border border-amber-300/45 tracking-wider uppercase shadow">
+                                        Carta Ultra-Rara ♥
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Striscia dorata descrittiva -->
+                            <div class="poke-info-strip">
+                                Pokémon Anima Gemella • Livello: Infinito • N° 001/001 ★
+                            </div>
+
+                            <!-- 3. SOTTO LA FOTO: Frase Romantica come "Effetto Speciale" del Pokémon -->
+                            <div id="abilityBox" class="ability-box flex flex-col gap-1 cursor-pointer" title="Clicca per cambiare effetto speciale">
+                                <div class="flex items-center justify-between border-b border-amber-500/30 pb-1">
+                                    <div class="flex items-center gap-1.5 min-w-0">
+                                        <span class="text-rose-600 text-xs shrink-0">✦</span>
+                                        <h3 id="specialEffectTitle" class="ability-content-transition font-poke font-extrabold text-[13px] text-rose-900 leading-tight truncate">
+                                            Bacio Ricarica-Cuore
+                                        </h3>
+                                    </div>
+                                    <div class="flex items-center gap-1.5 shrink-0">
+                                        <span id="specialEffectCounter" class="text-[9px] font-bold text-slate-500 bg-slate-200/80 px-1.5 py-0.2 rounded-full">
+                                            1/6
+                                        </span>
+                                        <span id="specialEffectValue" class="ability-content-transition font-poke font-black text-[11px] text-rose-600 bg-rose-100 border border-rose-300 px-1.5 py-0.2 rounded-md shadow-2xs">
+                                            ∞
+                                        </span>
+                                    </div>
+                                </div>
+                                <p id="specialEffectQuote" class="ability-content-transition text-[11px] leading-[1.34] font-semibold text-slate-800 italic py-0.5">
+                                    "Un bacio sulla guancia che annulla qualsiasi nuvola grigia e porta istantaneamente la felicità al 100%. Effetto permanente: mi fa innamorare di te ogni mese di più."
+                                </p>
+                            </div>
+
+                            <!-- 4. IN BASSO: Statistiche stile Pokémon (Attack, HP, Defense) con numeri random e barre -->
+                            <div class="relative z-10 flex flex-col gap-1.5">
+                                <div class="grid grid-cols-3 gap-2 bg-black/55 backdrop-blur-xs rounded-lg p-2 border border-white/25 shadow-inner">
+                                    <!-- ATTACK -->
+                                    <div class="flex flex-col bg-gradient-to-b from-white/15 to-white/5 rounded-md py-1 px-2 border border-white/15">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-[8.5px] font-extrabold uppercase tracking-wider text-amber-300">Attack</span>
+                                            <span class="text-[10px]">⚔️</span>
+                                        </div>
+                                        <span id="statAttackDisplay" class="font-poke font-black text-[16px] text-white leading-tight text-center my-0.5">960</span>
+                                        <div class="w-full h-1 bg-black/50 rounded-full overflow-hidden">
+                                            <div id="barAttack" class="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full transition-all duration-500" style="width: 96%"></div>
+                                        </div>
+                                    </div>
+
+                                    <!-- HP -->
+                                    <div class="flex flex-col bg-gradient-to-b from-white/15 to-white/5 rounded-md py-1 px-2 border border-white/15">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-[8.5px] font-extrabold uppercase tracking-wider text-rose-300">HP</span>
+                                            <span class="text-[10px]">❤️</span>
+                                        </div>
+                                        <span id="statHpDisplay" class="font-poke font-black text-[16px] text-white leading-tight text-center my-0.5">990</span>
+                                        <div class="w-full h-1 bg-black/50 rounded-full overflow-hidden">
+                                            <div id="barHp" class="h-full bg-gradient-to-r from-rose-400 to-red-500 rounded-full transition-all duration-500" style="width: 99%"></div>
+                                        </div>
+                                    </div>
+
+                                    <!-- DEFENSE -->
+                                    <div class="flex flex-col bg-gradient-to-b from-white/15 to-white/5 rounded-md py-1 px-2 border border-white/15">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-[8.5px] font-extrabold uppercase tracking-wider text-sky-300">Defense</span>
+                                            <span class="text-[10px]">🛡️</span>
+                                        </div>
+                                        <span id="statDefenseDisplay" class="font-poke font-black text-[16px] text-white leading-tight text-center my-0.5">940</span>
+                                        <div class="w-full h-1 bg-black/50 rounded-full overflow-hidden">
+                                            <div id="barDefense" class="h-full bg-gradient-to-r from-sky-400 to-blue-500 rounded-full transition-all duration-500" style="width: 94%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Riga finale collezionabile -->
+                                <div class="flex items-center justify-between text-[9px] font-bold text-white/95 px-1 pt-0.5 drop-shadow">
+                                    <span>Debolezza: <strong class="text-amber-200">I tuoi baci ×2</strong></span>
+                                    <span>Resistenza: <strong class="text-amber-200">Distanza -99</strong></span>
+                                    <span class="font-poke tracking-wider text-amber-200">★ HOLO PROMO</span>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controlli interattivi sotto la carta -->
+        <div class="mt-3 w-full max-w-md flex flex-col items-center gap-3 bg-slate-900/80 backdrop-blur-xl border border-white/15 rounded-2xl p-4 shadow-2xl">
+            
+            <!-- Selettore rapido colore gradiente della carta Pokémon -->
+            <div class="flex items-center justify-between w-full gap-2">
+                <span class="text-xs font-semibold text-slate-300">Gradiente Carta Pokémon:</span>
+                <div class="flex items-center gap-2.5">
+                    <button type="button" data-theme="fire" title="Rosso (Fuoco)" class="theme-btn ring-2 ring-amber-300 w-7 h-7 rounded-full bg-gradient-to-br from-rose-400 to-red-700 border border-white/75 shadow transition hover:scale-110 cursor-pointer"></button>
+                    <button type="button" data-theme="water" title="Blu (Acqua)" class="theme-btn w-7 h-7 rounded-full bg-gradient-to-br from-sky-300 to-blue-700 border border-white/75 shadow transition hover:scale-110 cursor-pointer"></button>
+                    <button type="button" data-theme="electric" title="Giallo (Elettro)" class="theme-btn w-7 h-7 rounded-full bg-gradient-to-br from-yellow-300 to-amber-600 border border-white/75 shadow transition hover:scale-110 cursor-pointer"></button>
+                    <button type="button" data-theme="fairy" title="Rosa/Viola (Psico Amore)" class="theme-btn w-7 h-7 rounded-full bg-gradient-to-br from-pink-400 to-purple-700 border border-white/75 shadow transition hover:scale-110 cursor-pointer"></button>
+                </div>
+            </div>
+
+            <!-- Pulsante principale per cambiare l'Effetto Speciale Romantico -->
+            <button
+                id="changeEffectBtn"
+                type="button"
+                class="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-pink-500/25 via-rose-500/30 to-amber-500/25 hover:from-pink-500/35 hover:via-rose-500/40 hover:to-amber-500/35 border border-rose-300/45 text-amber-100 font-extrabold text-xs shadow-md transition flex items-center justify-between gap-2 cursor-pointer active:scale-95"
+            >
+                <span class="flex items-center gap-1.5">
+                    <span>✨ Cambia Effetto Speciale</span>
+                </span>
+                <span id="changeEffectBtnBadge" class="px-2 py-0.5 rounded-full bg-rose-500/40 border border-rose-300/40 text-[10px] font-poke text-white">
+                    1/6 • Bacio Ricarica-Cuore
+                </span>
+            </button>
+
+            <!-- Pulsanti Azione -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full pt-0.5">
+                <button
+                    id="randomStatsBtn"
+                    type="button"
+                    class="py-2.5 px-4 rounded-xl bg-white/10 hover:bg-white/15 border border-rose-400/35 text-rose-200 font-bold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                >
+                    <span>🎲 Statistiche Random & ❤️</span>
+                </button>
+
+                <button
+                    id="downloadCardBtn"
+                    type="button"
+                    class="py-2.5 px-4 rounded-xl bg-gradient-to-r from-rose-500 via-amber-400 to-amber-500 hover:from-rose-400 hover:via-amber-300 hover:to-amber-400 text-slate-950 font-extrabold text-xs shadow-lg shadow-amber-500/25 transition flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    <span id="downloadBtnText">Scarica carta (PNG)</span>
+                </button>
+            </div>
+
+            <!-- Feedback di stato -->
+            <div class="flex flex-col items-center gap-1 w-full">
+                <p id="statusMessage" class="text-center text-[11px] text-amber-200 min-h-[16px]"></p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer romantico -->
+    <footer class="max-w-xl mx-auto w-full mt-3 pt-2 text-center text-[11px] text-slate-400 z-10">
+        Creata con tanto amore per te ♥
+    </footer>
+
+    <script>
+        const CARD_THEMES = {
+            fire: {
+                className: 'theme-fire',
+                badgeBg: 'from-rose-400 to-red-700'
+            },
+            water: {
+                className: 'theme-water',
+                badgeBg: 'from-sky-400 to-blue-700'
+            },
+            electric: {
+                className: 'theme-electric',
+                badgeBg: 'from-yellow-300 to-amber-600'
+            },
+            fairy: {
+                className: 'theme-fairy',
+                badgeBg: 'from-pink-400 to-purple-700'
+            }
+        };
+
+        const pokemonCard = document.getElementById('pokemonCard');
+        const cardInner = document.getElementById('cardInner');
+        const typeIconBadge = document.getElementById('typeIconBadge');
+        const cardPhoto = document.getElementById('cardPhoto');
+        const fallbackCoupleCanvas = document.getElementById('fallbackCoupleCanvas');
+
+        const cardHpTop = document.getElementById('cardHpTop');
+        const statAttackDisplay = document.getElementById('statAttackDisplay');
+        const statHpDisplay = document.getElementById('statHpDisplay');
+        const statDefenseDisplay = document.getElementById('statDefenseDisplay');
+        const barAttack = document.getElementById('barAttack');
+        const barHp = document.getElementById('barHp');
+        const barDefense = document.getElementById('barDefense');
+
+        const abilityBox = document.getElementById('abilityBox');
+        const specialEffectTitle = document.getElementById('specialEffectTitle');
+        const specialEffectValue = document.getElementById('specialEffectValue');
+        const specialEffectCounter = document.getElementById('specialEffectCounter');
+        const specialEffectQuote = document.getElementById('specialEffectQuote');
+        const changeEffectBtn = document.getElementById('changeEffectBtn');
+        const changeEffectBtnBadge = document.getElementById('changeEffectBtnBadge');
+
+        const randomStatsBtn = document.getElementById('randomStatsBtn');
+        const downloadCardBtn = document.getElementById('downloadCardBtn');
+        const downloadBtnText = document.getElementById('downloadBtnText');
+        const statusMessage = document.getElementById('statusMessage');
+
+        // Lista dei 6 Effetti Speciali Romantici preimpostati
+        const SPECIAL_EFFECTS = [
+            {
+                title: "Bacio Ricarica-Cuore",
+                value: "∞",
+                quote: "Un bacio sulla guancia che annulla qualsiasi nuvola grigia e porta istantaneamente la felicità al 100%. Effetto permanente: mi fa innamorare di te ogni mese di più."
+            },
+            {
+                title: "Squadra Leggendaria",
+                value: "MAX",
+                quote: "Finché siamo insieme, nessuna salita è troppo ripida e ogni avventura diventa la mia preferita. Rende chi possiede questa carta invincibile."
+            },
+            {
+                title: "Cattura Perfetta",
+                value: "100%",
+                quote: "Non serviva una Master Ball, è bastato il tuo sorriso per catturarmi. Danno critico al cuore ad ogni sguardo."
+            },
+            {
+                title: "Panorama Preferito",
+                value: "❤️",
+                quote: "Non importa quanto siano alte le montagne o nuvoloso il cielo: il mio posto preferito nel mondo sarà sempre lì, a un centimetro dal tuo sorriso."
+            },
+            {
+                title: "Rarità Olografica",
+                value: "★★★",
+                quote: "Più rara di una carta olografica, più bella di qualsiasi sogno: mese dopo mese, resti sempre tu la mia vittoria più grande."
+            },
+            {
+                title: "Legame Eterno",
+                value: "∞+",
+                quote: "Aumenta al massimo l'Attacco d'Amore e la Difesa dai giorni no. Sei la mia avventura più bella e il sorriso che sceglierei ogni giorno."
+            }
+        ];
+
+        let currentEffectIndex = 0;
+
+        /**
+         * Piccola esplosione di scintille e cuoricini localizzata sul box dell'effetto speciale
+         */
+        function spawnAbilitySparkles() {
+            const rect = abilityBox.getBoundingClientRect();
+            const symbols = ['✨', '💖', '❤️', '🌟', '💘'];
+            for (let i = 0; i < 9; i++) {
+                const spark = document.createElement('div');
+                spark.className = 'floating-heart text-base sm:text-lg';
+                spark.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+                const startX = rect.left + 16 + Math.random() * (rect.width - 32);
+                const startY = rect.top + Math.random() * rect.height;
+                spark.style.left = `${startX}px`;
+                spark.style.top = `${startY}px`;
+                spark.style.animationDuration = '1.25s';
+                document.body.appendChild(spark);
+                setTimeout(() => spark.remove(), 1300);
+            }
+        }
+
+        /**
+         * Passa all'effetto speciale successivo con transizione fluida
+         */
+        function cycleSpecialEffect() {
+            currentEffectIndex = (currentEffectIndex + 1) % SPECIAL_EFFECTS.length;
+            const nextEffect = SPECIAL_EFFECTS[currentEffectIndex];
+            const indexLabel = `${currentEffectIndex + 1}/${SPECIAL_EFFECTS.length}`;
+
+            // Animazione del contenitore e fade-out dei testi
+            abilityBox.classList.add('effect-changing');
+            specialEffectTitle.classList.add('ability-content-hidden');
+            specialEffectValue.classList.add('ability-content-hidden');
+            specialEffectQuote.classList.add('ability-content-hidden');
+
+            spawnAbilitySparkles();
+
+            setTimeout(() => {
+                specialEffectTitle.textContent = nextEffect.title;
+                specialEffectValue.textContent = nextEffect.value;
+                specialEffectCounter.textContent = indexLabel;
+                specialEffectQuote.textContent = `"${nextEffect.quote}"`;
+                changeEffectBtnBadge.textContent = `${indexLabel} • ${nextEffect.title}`;
+
+                specialEffectTitle.classList.remove('ability-content-hidden');
+                specialEffectValue.classList.remove('ability-content-hidden');
+                specialEffectQuote.classList.remove('ability-content-hidden');
+                abilityBox.classList.remove('effect-changing');
+            }, 170);
+
+            statusMessage.textContent = `✨ Effetto Speciale (${indexLabel}): ${nextEffect.title}!`;
+            setTimeout(() => {
+                statusMessage.textContent = '';
+            }, 3000);
+        }
+
+        changeEffectBtn.addEventListener('click', cycleSpecialEffect);
+        abilityBox.addEventListener('click', cycleSpecialEffect);
+
+        /**
+         * Disegna sul Canvas di fallback un'illustrazione curata della foto
+         * mostrata silenziosamente solo nell'anteprima locale se il file .jpg non è nella stessa cartella
+         */
+        function drawMountainCoupleFallback(canvas) {
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+
+            // 1. Cielo nuvoloso di montagna
+            const skyGrad = ctx.createLinearGradient(0, 0, 0, h * 0.56);
+            skyGrad.addColorStop(0, '#94a3b8');
+            skyGrad.addColorStop(0.5, '#cbd5e1');
+            skyGrad.addColorStop(1, '#e2e8f0');
+            ctx.fillStyle = skyGrad;
+            ctx.fillRect(0, 0, w, h * 0.56);
+
+            // Nuvole morbide
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+            [[130, 80, 95, 34], [310, 65, 130, 42], [520, 90, 110, 36], [220, 135, 150, 35]].forEach(([cx, cy, rx, ry]) => {
+                ctx.beginPath();
+                ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // 2. Catena montuosa lontana bluastra
+            ctx.fillStyle = '#64748b';
+            ctx.beginPath();
+            ctx.moveTo(0, h * 0.52);
+            ctx.lineTo(140, h * 0.36);
+            ctx.lineTo(290, h * 0.44);
+            ctx.lineTo(470, h * 0.33);
+            ctx.lineTo(620, h * 0.41);
+            ctx.lineTo(w, h * 0.35);
+            ctx.lineTo(w, h * 0.58);
+            ctx.lineTo(0, h * 0.58);
+            ctx.closePath();
+            ctx.fill();
+
+            // 3. Bosco di abeti (pini scuri a sinistra e a destra)
+            function drawPineTree(x, baseY, treeW, treeH) {
+                ctx.fillStyle = '#1e3a2f';
+                for (let layer = 0; layer < 3; layer++) {
+                    const topY = baseY - treeH + layer * (treeH * 0.22);
+                    const bottomY = baseY - (2 - layer) * (treeH * 0.22);
+                    const halfW = (treeW * 0.5) * (0.65 + layer * 0.2);
+                    ctx.beginPath();
+                    ctx.moveTo(x, topY);
+                    ctx.lineTo(x - halfW, bottomY);
+                    ctx.lineTo(x + halfW, bottomY);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+            }
+
+            for (let x = 18; x < 230; x += 26) {
+                drawPineTree(x, h * 0.58, 34, 65 + (x % 20));
+            }
+            for (let x = 440; x < w - 10; x += 25) {
+                drawPineTree(x, h * 0.59, 36, 72 + (x % 18));
+            }
+
+            // 4. Prato alpino verde
+            const meadowGrad = ctx.createLinearGradient(0, h * 0.54, 0, h);
+            meadowGrad.addColorStop(0, '#65a30d');
+            meadowGrad.addColorStop(0.5, '#4d7c0f');
+            meadowGrad.addColorStop(1, '#3f6212');
+            ctx.fillStyle = meadowGrad;
+            ctx.fillRect(0, h * 0.54, w, h * 0.46);
+
+            // 5. Staccionata in legno in basso
+            ctx.strokeStyle = '#a8a29e';
+            ctx.lineWidth = 7;
+            ctx.lineCap = 'round';
+            // Pali verticali sinistra e destra
+            [45, 125, 565, 650].forEach((px) => {
+                ctx.beginPath();
+                ctx.moveTo(px, h * 0.79);
+                ctx.lineTo(px, h * 0.96);
+                ctx.stroke();
+            });
+            // Traverse orizzontali
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.moveTo(10, h * 0.84);
+            ctx.lineTo(165, h * 0.88);
+            ctx.moveTo(10, h * 0.91);
+            ctx.lineTo(165, h * 0.95);
+            ctx.moveTo(520, h * 0.89);
+            ctx.lineTo(w - 10, h * 0.94);
+            ctx.stroke();
+
+            // 6. Ragazzo al centro-destra (felpa blu scuro col cappuccio, ricci castani, sorriso)
+            // Spalle e felpa blu navy
+            ctx.fillStyle = '#1e293b';
+            ctx.beginPath();
+            ctx.moveTo(275, h);
+            ctx.quadraticCurveTo(300, 325, 445, 340);
+            ctx.quadraticCurveTo(535, 360, 565, h);
+            ctx.closePath();
+            ctx.fill();
+
+            // Cappuccio felpa
+            ctx.fillStyle = '#334155';
+            ctx.beginPath();
+            ctx.ellipse(395, 348, 74, 34, -0.12, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Collo e viso ragazzo
+            ctx.fillStyle = '#eab696';
+            ctx.fillRect(348, 285, 50, 62);
+            ctx.beginPath();
+            ctx.ellipse(362, 242, 56, 68, -0.05, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Guancia arrossata
+            ctx.fillStyle = 'rgba(244, 63, 94, 0.22)';
+            ctx.beginPath();
+            ctx.arc(332, 255, 16, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Occhi e sorriso ragazzo
+            ctx.fillStyle = '#292524';
+            ctx.beginPath();
+            ctx.arc(342, 226, 4.5, 0, Math.PI * 2);
+            ctx.arc(384, 222, 4.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.strokeStyle = '#44403c';
+            ctx.lineWidth = 3.2;
+            ctx.beginPath();
+            ctx.arc(341, 214, 11, Math.PI * 1.15, Math.PI * 1.85);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(384, 210, 11, Math.PI * 1.15, Math.PI * 1.85);
+            ctx.stroke();
+
+            // Sorriso dolce
+            ctx.strokeStyle = '#be123c';
+            ctx.lineWidth = 3.5;
+            ctx.beginPath();
+            ctx.arc(364, 258, 18, 0.15, Math.PI - 0.15);
+            ctx.stroke();
+
+            // Capelli ricci castani del ragazzo
+            ctx.fillStyle = '#3b2314';
+            const curls = [
+                [315, 195, 22], [338, 178, 25], [368, 174, 26], [398, 182, 24],
+                [416, 204, 20], [326, 202, 18], [356, 192, 20], [386, 194, 19]
+            ];
+            curls.forEach(([cx, cy, r]) => {
+                ctx.beginPath();
+                ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // 7. Ragazza a sinistra (capelli lunghi castani mossi, occhiali sulla testa, bacio sulla guancia)
+            // Capelli dietro
+            ctx.fillStyle = '#5c3a21';
+            ctx.beginPath();
+            ctx.ellipse(215, 335, 78, 115, -0.15, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Giacca scura
+            ctx.fillStyle = '#27272a';
+            ctx.beginPath();
+            ctx.moveTo(145, h);
+            ctx.quadraticCurveTo(185, 375, 295, 395);
+            ctx.lineTo(315, h);
+            ctx.closePath();
+            ctx.fill();
+
+            // Viso ragazza inclinato verso la guancia del ragazzo
+            ctx.save();
+            ctx.translate(268, 272);
+            ctx.rotate(-0.22);
+            ctx.fillStyle = '#e6b191';
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 50, 58, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Occhio socchiuso felice
+            ctx.strokeStyle = '#292524';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(6, -10, 9, 0.2, Math.PI - 0.2);
+            ctx.stroke();
+
+            // Labbra a bacio appoggiate alla guancia del ragazzo
+            ctx.fillStyle = '#e11d48';
+            ctx.beginPath();
+            ctx.arc(46, 2, 7, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+            // Capelli mossi anteriori e occhiali da sole sulla testa
+            ctx.fillStyle = '#6b4423';
+            [[215, 232, 28], [195, 268, 30], [185, 315, 32], [205, 365, 30], [238, 218, 24]].forEach(([cx, cy, r]) => {
+                ctx.beginPath();
+                ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Occhiali da sole sulla testa della ragazza
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.fillStyle = '#1e293b';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.ellipse(222, 212, 16, 9, -0.45, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Cuoricino luminoso sul bacio
+            ctx.fillStyle = '#f43f5e';
+            ctx.font = 'bold 26px sans-serif';
+            ctx.fillText('❤️', 302, 240);
+        }
+
+        /**
+         * Gestisce il caricamento diretto della foto sul web provando automaticamente
+         * tutti i nomi file possibili nella cartella del sito:
+         * IMG_1021_2.jpg -> IMG_1021.jpg -> IMG_1021_2.JPG -> IMG_1021.JPG -> foto.jpg
+         */
+        function initPhotoSource() {
+            drawMountainCoupleFallback(fallbackCoupleCanvas);
+
+            const candidateFiles = [
+                'IMG_1021_2.jpg',
+                'IMG_1021.jpg',
+                'IMG_1021_2.JPG',
+                'IMG_1021.JPG',
+                'foto.jpg'
+            ];
+            let currentCandidateIndex = 0;
+
+            cardPhoto.onload = () => {
+                cardPhoto.classList.remove('hidden');
+                fallbackCoupleCanvas.classList.add('hidden');
+            };
+
+            cardPhoto.onerror = () => {
+                currentCandidateIndex++;
+                if (currentCandidateIndex < candidateFiles.length) {
+                    cardPhoto.src = candidateFiles[currentCandidateIndex];
+                } else {
+                    // Silenziosamente mostra il canvas solo se nessun file immagine è presente nella cartella
+                    cardPhoto.classList.add('hidden');
+                    fallbackCoupleCanvas.classList.remove('hidden');
+                }
+            };
+
+            // Se l'immagine fosse già fallita prima dell'aggancio dell'handler, avvia la catena di tentativi
+            if (cardPhoto.complete && cardPhoto.naturalWidth === 0) {
+                cardPhoto.onerror();
+            }
+        }
+
+        // Gestione interazione 3D e Shimmer Olografico
+        let isHoveringCard = false;
+        let autoShowcaseActive = true;
+
+        function updateHoloEffect(normX, normY, opacity = 0.96) {
+            const clampedX = Math.max(0, Math.min(1, normX));
+            const clampedY = Math.max(0, Math.min(1, normY));
+
+            const pointerX = (clampedX * 100).toFixed(2) + '%';
+            const pointerY = (clampedY * 100).toFixed(2) + '%';
+
+            // Rotazione 3D morbida
+            const rotateY = ((clampedX - 0.5) * 28).toFixed(2) + 'deg';
+            const rotateX = ((0.5 - clampedY) * 26).toFixed(2) + 'deg';
+
+            // Scorrimento diagonale del rainbow gradient e dello shimmer
+            const bgX = (15 + clampedX * 70).toFixed(2) + '%';
+            const bgY = (15 + clampedY * 70).toFixed(2) + '%';
+            const shimmerPos = ((clampedX * 0.6 + clampedY * 0.4) * 100).toFixed(2) + '%';
+
+            pokemonCard.style.setProperty('--pointer-x', pointerX);
+            pokemonCard.style.setProperty('--pointer-y', pointerY);
+            pokemonCard.style.setProperty('--rotate-x', rotateX);
+            pokemonCard.style.setProperty('--rotate-y', rotateY);
+            pokemonCard.style.setProperty('--bg-x', bgX);
+            pokemonCard.style.setProperty('--bg-y', bgY);
+            pokemonCard.style.setProperty('--shimmer-pos', shimmerPos);
+            pokemonCard.style.setProperty('--card-opacity', opacity);
+        }
+
+        pokemonCard.addEventListener('mousemove', (e) => {
+            isHoveringCard = true;
+            const rect = pokemonCard.getBoundingClientRect();
+            const normX = (e.clientX - rect.left) / rect.width;
+            const normY = (e.clientY - rect.top) / rect.height;
+            updateHoloEffect(normX, normY, 1);
+        });
+
+        pokemonCard.addEventListener('mouseleave', () => {
+            isHoveringCard = false;
+        });
+
+        pokemonCard.addEventListener('touchmove', (e) => {
+            if (!e.touches[0]) return;
+            isHoveringCard = true;
+            const touch = e.touches[0];
+            const rect = pokemonCard.getBoundingClientRect();
+            const normX = (touch.clientX - rect.left) / rect.width;
+            const normY = (touch.clientY - rect.top) / rect.height;
+            updateHoloEffect(normX, normY, 1);
+        }, { passive: true });
+
+        pokemonCard.addEventListener('touchend', () => {
+            isHoveringCard = false;
+        });
+
+        // Fluttuazione 3D automatica quando il cursore non è sopra la carta
+        function runAutoShowcase(timestamp) {
+            if (autoShowcaseActive && !isHoveringCard) {
+                const t = timestamp * 0.0015;
+                const normX = 0.5 + Math.sin(t) * 0.32;
+                const normY = 0.5 + Math.cos(t * 0.85) * 0.25;
+                updateHoloEffect(normX, normY, 0.85);
+            }
+            requestAnimationFrame(runAutoShowcase);
+        }
+        requestAnimationFrame(runAutoShowcase);
+
+        // Cambio gradiente carta (Rosso, Blu, Giallo, Rosa/Viola)
+        document.querySelectorAll('.theme-btn').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const themeKey = btn.getAttribute('data-theme');
+                const theme = CARD_THEMES[themeKey];
+                if (!theme) return;
+
+                document.querySelectorAll('.theme-btn').forEach((b) => {
+                    b.classList.remove('ring-2', 'ring-amber-300');
+                });
+                btn.classList.add('ring-2', 'ring-amber-300');
+
+                cardInner.className = `card-inner ${theme.className}`;
+                typeIconBadge.className = `w-7 h-7 rounded-full flex items-center justify-center shadow-md border border-white/85 bg-gradient-to-br ${theme.badgeBg}`;
+            });
+        });
+
+        // Pioggia di cuoricini sulla carta
+        function spawnFloatingHearts() {
+            const rect = pokemonCard.getBoundingClientRect();
+            const symbols = ['❤️', '💖', '✨', '💘', '🌟'];
+            for (let i = 0; i < 14; i++) {
+                const heart = document.createElement('div');
+                heart.className = 'floating-heart text-xl sm:text-2xl';
+                heart.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+                const startX = rect.left + Math.random() * rect.width;
+                const startY = rect.top + rect.height * (0.3 + Math.random() * 0.55);
+                heart.style.left = `${startX}px`;
+                heart.style.top = `${startY}px`;
+                heart.style.animationDelay = `${Math.random() * 0.35}s`;
+                document.body.appendChild(heart);
+                setTimeout(() => heart.remove(), 2200);
+            }
+        }
+
+        // Generazione numeri random per Attack, HP, Defense
+        function randomizePokemonStats(withHearts = false) {
+            const randStat = (min, max) => Math.floor(Math.random() * ((max - min) / 10 + 1)) * 10 + min;
+            const atk = randStat(850, 990);
+            const hp = randStat(880, 990);
+            const def = randStat(850, 990);
+
+            statAttackDisplay.textContent = atk;
+            statHpDisplay.textContent = hp;
+            cardHpTop.textContent = hp;
+            statDefenseDisplay.textContent = def;
+
+            barAttack.style.width = `${Math.round((atk / 999) * 100)}%`;
+            barHp.style.width = `${Math.round((hp / 999) * 100)}%`;
+            barDefense.style.width = `${Math.round((def / 999) * 100)}%`;
+
+            if (withHearts) {
+                spawnFloatingHearts();
+                statusMessage.textContent = `💖 Nuove statistiche leggendarie: ATK ${atk} • HP ${hp} • DEF ${def}!`;
+                setTimeout(() => {
+                    statusMessage.textContent = '';
+                }, 3500);
+            }
+        }
+
+        randomStatsBtn.addEventListener('click', () => randomizePokemonStats(true));
+
+        // Salvataggio della carta come PNG ad alta risoluzione
+        downloadCardBtn.addEventListener('click', async () => {
+            try {
+                downloadCardBtn.disabled = true;
+                downloadBtnText.textContent = 'Salvataggio...';
+                statusMessage.textContent = 'Generazione della carta PNG ad alta risoluzione...';
+
+                // Assicuriamo che nessuna transizione di cambio effetto nasconda il testo durante lo scatto PNG
+                abilityBox.classList.remove('effect-changing');
+                specialEffectTitle.classList.remove('ability-content-hidden');
+                specialEffectValue.classList.remove('ability-content-hidden');
+                specialEffectQuote.classList.remove('ability-content-hidden');
+
+                autoShowcaseActive = false;
+                pokemonCard.style.transition = 'none';
+                pokemonCard.style.transform = 'none';
+                pokemonCard.style.setProperty('--card-opacity', '0.42');
+
+                await new Promise((r) => setTimeout(r, 90));
+
+                const canvas = await html2canvas(pokemonCard, {
+                    scale: 2,
+                    backgroundColor: null,
+                    useCORS: true,
+                    allowTaint: true,
+                    logging: false
+                });
+
+                pokemonCard.style.transition = '';
+                pokemonCard.style.transform = '';
+                autoShowcaseActive = true;
+
+                const link = document.createElement('a');
+                link.download = 'carta_pokemon_mesiversario_noi_due.png';
+                link.href = canvas.toDataURL('image/png');
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                statusMessage.textContent = '✅ Carta Pokémon salvata in PNG! Buon Mesiversario ❤️';
+            } catch (error) {
+                console.error('Errore durante il salvataggio PNG:', error);
+                statusMessage.textContent = '✨ Usa uno screenshot per catturare la carta con il tuo riflesso preferito!';
+                pokemonCard.style.transition = '';
+                pokemonCard.style.transform = '';
+                autoShowcaseActive = true;
+            } finally {
+                downloadCardBtn.disabled = false;
+                downloadBtnText.textContent = 'Scarica carta (PNG)';
+                setTimeout(() => {
+                    statusMessage.textContent = '';
+                }, 4500);
+            }
+        });
+
+        // Avvio automatico all'apertura della pagina
+        window.addEventListener('DOMContentLoaded', () => {
+            initPhotoSource();
+            randomizePokemonStats(false);
+            setTimeout(spawnFloatingHearts, 500);
+        });
+    </script>
+</body>
+</html>
